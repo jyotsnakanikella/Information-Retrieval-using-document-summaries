@@ -1,0 +1,740 @@
+Support Vector Machine Active Learning
+for Image Retrieval
+Simon Tong
+Department of Computer Science
+Stanford University
+Sanford, CA 94305
+simon.tong@cs.stanford.edu
+ABSTRACT
+Relevance feedback is often a critical component when designing image databases. With these databases it is difficult
+to specify queries directly and explicitly. Relevance feedback
+interactively determinines a user’s desired output or query
+concept by asking the user whether certain proposed images
+are relevant or not. For a relevance feedback algorithm to be
+effective, it must grasp a user’s query concept accurately and
+quickly, while also only asking the user to label a small number of images. We propose the use of a support vector machine active learning algorithm for conducting effective relevance feedback for image retrieval. The algorithm selects the
+most informative images to query a user and quickly learns
+a boundary that separates the images that satisfy the user’s
+query concept from the rest of the dataset. Experimental
+results show that our algorithm achieves significantly higher
+search accuracy than traditional query refinement schemes
+after just three to four rounds of relevance feedback.
+Keywords
+active learning, image retrieval, query concept, relevance
+feedback, support vector machines.
+1. INTRODUCTION
+One key design task, when constructing image databases,
+is the creation of an effective relevance feedback component. While it is sometimes possible to arrange images
+within an image database by creating a hierarchy, or by
+hand-labeling each image with descriptive words, it is often time-consuming, costly and subjective. Alternatively,
+requiring the end-user to specify an image query in terms of
+low level features (such as color and spatial relationships) is
+challenging to the end-user, because an image query is hard
+to articulate, and articulation can again be subjective.
+Thus, there is a need for a way to allow a user to implicitly
+inform a database of his or her desired output or query conPermission to make digital or hard copies of all or part of this work for
+personal or classroom use is granted without fee provided that copies
+are not made or distributed for profit or commercial advantage and that
+copies bear this notice and the full citation on the first page. To copy
+otherwise, or republish, to post on servers or to redistribute to lists,
+requires prior specific permission and/or a fee.
+MM’OI, Sept. 30-Oct. 5,2001, Ottawa, Canada.
+Copyright 2001 ACM l-581 13-394-4/01/0009., .$5.00
+Edward Chang
+Electrical & Computer Engineering
+University of California
+Santa Barbara, CA 93106
+echang@ece.ucsb.edu
+cept. To address this requirement, relevance feedback can be
+used as a query refinement scheme to derive or learn a user’s
+query concept. To solicit feedback, the refinement scheme
+displays a few image instances and the user labels each image as “relevant” or “not relevant.” Based on the answers,
+another set of images from the database are brought up to
+the user for labeling. After some number of such querying
+rounds, the refinement scheme returns a number of items in
+the database that it believes will be of interest to the user.
+The construction of such a query refinement scheme (we
+call it a query concept. learner or learner hereafter) can be
+regarded as a machine learning task. In particular, it can
+be seen as a case of pool-based active learning [18, 221. In
+pool-based active learning the learner has access to a pool
+of unlabeled data and can request the user’s label for a certain number of instances in the pool. In the image retrieval
+domain, the unlabeled pool would be the entire database
+of images. An instance would be an image, and the two
+possible labelings of an image would be “relevant” and “not
+relevant.” The goal for the learner is to learn the user’s
+query concept - in other words the goal is to give a label
+to each image within the database such that for any image,
+the learner’s labeling and the user’s labeling will agree.
+The main issue with active learning is finding a way to
+choose informative images within the pool to ask the user
+to label. We call such a request for the label of an image a
+pool-query. Most machine learning algorithms are passive in
+the sense that they are generally applied using a randomly
+selected training set. The key idea with active learning is
+that it should choose its next pool-query based upon the
+past answers to previous pool-queries.
+In general, and for the image retrieval task in particular,
+such a learner must meet two critical design goals. First, the
+learner must learn target concepts accurately. Second, the
+learner must grasp a concept quickly, with only a small number of labeled instances, since most users do not wait around
+to provide a great deal of feedback. In this study, we propose
+using a support vector machine active learner (SVM*,.ti,,)
+to achieve these goals. SVMA,.~%~~ combines active learning
+with support vector machines (SVMs). SVMs [34, 11 have
+met with significant success in numerous real-world learning
+tasks. Like most machine learning algorithms, they are generally applied using a randomly selected training set which is
+not very useful in the relevance feedback setting. Recently,
+107
+general purpose methods for active learning with SVMs have
+been independently developed by a number of researchers [2,
+28, 331. We shall use the work and theoretical motivation
+of [33] on active learning with SVMs to extend the use of
+support vector machines to the task of relevance feedback
+for image databases.
+Intuitively, SVMA,-~~~~ works by combining the following
+three ideas:
+1. SVM,L,~~~~~ regards the task of learning a target concept as one of learning a SVM binary classifier. An
+SVM captures the query concept by separating the
+relevant images from the irrelevant images with a hyperplane in a projected space, usually a very highdimensional one. The projected points on one side
+of the hyperplane are considered relevant to the query
+concept and the rest irrelevant.
+2. SVMActzue learns the classifier quickly via active learning. The active part of SVMA~~%~~ selects the most informative instances with which to train the SVM classifier. This step ensures fast convergence to the query
+concept in a small number of feedback rounds.
+3. Once the classifier is trained, SVMA~~$~~ returns the
+top-lc most relevant images. These are the Ic images
+farthest from the hyperplane on the query concept
+side.
+In summary, our contributions are as follows:
+. The use of SVM active learning for image retrieval.
+We show that combining SVMs with an active learning component can produce a learner that is particularly well suited to the query refinement task in image
+retrieval, significantly outperforming traditional methods.
+. The multi-resolution image feature organization. We
+show that organizing image features in different resolutions gives the learner the flexibility to model subjective perception and to satisfy a variety of search tasks.
+Using this representation for images, our learner can
+quickly converge to target query concepts.
+The rest of this paper is organized into seven sections. Section 2 introduces SVMs. Section 3 then introduces the notion of a version space which in Section 4 provides theoretical
+motivation for a method for performing active learning with
+SVMs. Section 5 depicts our multi-resolution image characterization. In Section 6, we report experimental results
+showing that our SVM active learner significantly outperforms traditional methods. Section 7 surveys related work.
+Finally, we offer our conclusions in Section 8.
+2. SUPPORT VECTOR MACHINES
+Support vector machines are a core machine learning technology. They have strong theoretical foundations and excellent empirical successes. They have been applied to tasks
+such as handwritten digit recognition [35], object recognition [25], and text classification [14].
+Figure 1: A simple linear Support Vector Machine
+We shall consider SVMs in the binary classification setting. We are given training data (x1 .xn} that are vectors in some space X s lRRd. We are also given their labels
+{yr yn} where yz E (--1,l). In their simplest form, SVMs
+are hyperplanes that separate the training data by a maximal margin (see Fig. 1). All vectors lying on one side of the
+hyperplane are labeled as -1, and all vectors lying on the
+other side are labeled as 1. The training instances that lie
+closest to the hyperplane are called support vectors. More
+generally, SVMs allow one to project the original training
+data in space X to a higher dimensional feature space F via
+a Mercer kernel operator K. In other words, we consider
+the set of classifiers of the form: f(x) = Cy,, (~,K(x,,x).
+When f(x) 2 0 we classify x as $1, otherwise we classify x
+as -1.
+When li satisfies Mercer’s condition [l] we can write: K(u, V) =
+Q(u). Q(v) where CD : X -+ J= and “.” denotes an inner product. We can then rewrite f as:
+f(x) = w @(x)1 where w = c oZ@(xE). (1)
+i=l
+Thus, by using I\- we are implicitly projecting the training
+data into a different (often higher dimensional) feature space
+F. The SVM then computes the ots that correspond to the
+maximal margin hyperplane in F. By choosing different
+kernel functions we can implicitly project the training data
+from X into spaces F for which hyperplanes in F correspond
+to more complex decision boundaries in the original space
+X.
+Two commonly used kernels are the polynomial kernel K(u, V) =
+(u . v + 1)n which induces polynomial boundaries of degree
+p in the original space X and the radial basis function kernel K(u, v) = (t~-~(~-~)‘(~-~)) which induces boundaries by
+placing weighted Gaussians upon key training instances. In
+the remainder of this paper we will assume that the modulus
+of the training data feature vectors are constant, i.e., for all
+training instances xI, ]]@a(~~)]] = X for some fixed X. The
+quantity ]]@(x;)]] is always constant for radial basis function
+kernels, and so the assumption has no effect for this kernel.
+For ]]@a(~~)]] to be constant with the polynomial kernels we
+require that ]]x,]] be constant. It is possible to relax this
+constraint on a(~,). We shall discuss this option at the end
+of Section 4.
+108
+3. VERSION SPACE
+Given a set of labeled training data and a Mercer kernel
+li, there is a set of hyperplanes that separate the data in
+the induced feature space F. We call this set of consistent
+hyperplanes or hypotheses the version space [23]. In other
+words, hypothesis f is in version space if for every training
+instance x; with label yZ we have that f(xl) > 0 if y2 = 1
+and f(x;) < 0 if y; = -1. More formally:
+DEFINITION 3.1. Our set of possible hypotheses is given
+as:
+31 = f 1 f(x) = w,;$dx) where w E W
+{ 1
+,
+where our parameter space W is simply equal to F. The
+Version space, V is then defined as:
+v = (f E H I v’i E { 1 . n} ytf(xt) > 0)
+Notice that since H is a set of hyperplanes, there is a bijection (an exact correspondence) between unit vectors w and
+hypotheses f in H. Thus we will redefine V as:
+v = (w E w 1 llwll = 1, ?/%(W @(Xl)) > 0, i = 1.. n}.
+Note that a version space only exists if the training data
+are linearly separable in the feature space. Thus, we require
+linear separability of the training data in the feature space.
+This restriction is much less harsh than it might at first
+seem. First, the feature space often has a very high dimension and so in many cases it results in the data set being
+linearly separable. Second, as noted by [30], it is possible
+to modify any kernel so that the data in the new induced
+feature space is linearly separable. This is done by redefining for all training instances xc: K(x,, x,) + K(x,, x;) + v
+where Y is a positive regularization constant. The effect of
+this modification is to permit linear non-separability of the
+training data in the original feature space.
+There exists a duality between the feature space F and the
+parameter space W [35, 111 which we shall take advantage of
+in the next section: points in F correspond to hyperplanes
+in W and vice versa.
+Clearly, by definition, points in W correspond to hyperplanes in F. The intuition behind the converse is that observing a training instance x; in feature space restricts the
+set of separating hyperplanes to ones that classify xI correctly. In fact, we can show that the set of allowable points
+w in W is restricted to lie on one side of a hyperplane in
+W. More formally, to show that points in F correspond
+to hyperplanes in W, suppose we are given a new training
+instance xI with label yt. Then any separating hyperplane
+must satisfy y%(w @(xl)) > 0. Now, instead of viewing w
+as the normal vector of a hyperplane in F, think of y,@(x,)
+as being the normal vector of a hyperplane in W. Thus
+Y/I(W. @(xi)) = w. y%Q(x,) > 0 defines a half-space in W.
+Furthermore w. y;Q(xz) = 0 defines a hyperplane in W that
+acts as one of the boundaries to version space V. Notice
+that version space is a connected region on the surface of
+a hypersphere in parameter space. See Figure 3(a) for an
+example.
+SVMs find the hyperplane that maximizes the margin in
+feature space F. One way to pose this is as follows:
+maximize,Er min,{y,(w @(x2))}
+subject to: llwll = 1
+yc(w @(XI)) > 0 i = 1.. .n.
+By having the conditions ]]w]] = 1 and yI(w @(xi)) > 0
+we cause the solution to lie in version space. Now, we can
+view the above problem as finding the point w in version
+space that maximizes the distance min, {w . ylQ(xl)}. From
+the duality between feature and parameter space, and since
+]]@(x~)]] = 1, then each y%@(x;) is a unit normal vector of
+a hyperplane in parameter space and each of these hyperplanes delimits the version space. Thus we want to find the
+point in version space that maximizes the minimum distance
+to any of the delineating hyperplanes. That is, SVMs find
+the center of the largest radius hypersphere whose center
+can be placed in version space and whose surface does not
+intersect with the hyperplanes corresponding to the labeled
+instances, as in Figure 3(b). It can be easily shown that
+the hyperplanes touched by the maximal radius hypersphere
+correspond to the support vectors and that the radius of the
+hypersphere is the margin of the SVM.
+4. ACTIVE LEARNING
+In pool-based active learning we have a pool of unlabeled
+instances. It is assumed that the instances x are independently and identically distributed according to some underlying distribution F(x) and the labels are distributed according to some conditional distribution P(y I x).
+Given an unlabeled pool U, an active learner 1 has three
+components: (f, Q, X). The first component is a classifier,
+f : X - (-1, l}, trained on the current set of labeled data
+X (and possibly unlabeled instances in U too). The second component p(X) is the querying function that, given a
+current labeled set X, decides which instance in U to query
+next. The active learner can return a classifier f after each
+pool-query (online learning) or after some fixed number of
+pool-queries.
+The main difference between an active learner and a regular
+passive learner is the querying component q. This brings us
+to the issue of how to choose the next unlabeled instance in
+the pool to query. We use an approach that queries points
+so as to attempt to reduce the size of the version space as
+much as possible. We need one more definition before we
+can proceed:
+DEFINITION 4.1. Area(V) is the surface area that the version space V occupies on the hypersphere llwll = 1.
+We wish to reduce the version space as fast as possible. Intuitively, one good way of doing this is to choose a pool-query
+that halves the version space. More formally, we can use the
+following lemma to motivate which instances to use as our
+pool-query:
+LEMMA 4.2. (Tong t3 Keller, 2000) Suppose we have an
+input space X, finite dimensional feature space .ZF (induced
+109
+Figure 2: (a) Version space duality. The surface of the hypersphrre rcprcsents unit weight vectors. Each
+of the two hyperplancs corresponds to a labeled training instance. Each hypcrplane restricts the area on
+the hypersphcrc in which consistent hypotheses can lie. Here version space is the surface segment of the
+hyperspherc closest to the camera. (b) An SVM classifier in version space. The dark embedded sphere is
+the largest radius sphere whose center lies in version space and whose surface does not intersect with the
+hyperplanes. The center of the anbedded sphere corresponds to the SVM, its radius is the margin of the
+SVM in F and the training points corresponding to the hyperplanes that it touches are the support vectors.
+(c) Simple Margin Method.
+via o kernel I<), and parameter space W. Suppose active
+learner e’ always queries instances whose corresponding hypetylnnes iu parameter space W h&es the area of the current version space. Let e be ong other active learner. Denote
+the uersi~n spes of e’ and e after i pool-queries (IS V: and
+V, respectively. Let P denote the set of all conditional distributions of y given x. Then.
+with strict inequality whenever there mists u pool-gueryj E
+(1 ;) by C that does not halve version space V,-,
+This lemma. says that, for any given number of pool-queries,
+0’ minimizes the maximum expected size of the version
+space, where the maximum is taken over alI conditional distributions of y given x.
+Now, suppose w* t W is the unit parameter vector corresponding to the SVM that we would have obtained had
+we known the actual labels of off of the data in the pool.
+We know that W* must lie in each of the version spaces
+VI 1 V2 1 V3.. where V, denotes the version space after
+i pool-queries. Thus, by shrinking the size of the version
+space as much as possible with each pool-query we are reducing as fast as possible the space in which w* can lie.
+Hence, the SVM that we learn from our limited number of
+pool-queries will lie close to w*.
+This discussion provides motivation for an approach where
+we query instances that split the current version space into
+two equal parts as much as possible. Given an unlabeled
+instance x from the pool, it is not practical to explicitly
+compute the sizes of the new version spaces V- and V+
+(i.e., the version spaces obtained when x is labeled as -1
+and +I respectively). There is way of approximating this
+procedure as noted by [33]:
+Simple Method. Recall from section 3 that, given data
+{x, .x;) and labels (91 y,}, the SVM unit vector wI
+obtained from this data is the center of the largest hypersphere that can fit inside the current version space V,. The
+position of w, in the version space V, clearly depends on the
+shape of the region V,, however it is often approximately in
+the center of the version space. Now, we can test each of the
+unlabeled instances x in the pool to see how close their carresponding hyperplanes in W come to the centrally placed
+w,. The closer a hyperplane in W is to the point w,, the
+more centrally it is placed in version space, and the more
+it bisects version space. Thus we can pick the unlabeled
+instance in the pool whose hyperplane in W comes closest
+to the vector w,. For each unlabeled instance x, the shortest distance between its hyperplane in W and the vector
+w, is simply the distance between the feature vector C’(x)
+and the hyperplane w, in F ~ which is easily computed by
+Iw, Q(x)l. This results in the natural Simple rule:
+l Learn an SVM on the existing labeled data and choose
+as the next instance to query the pool instance that
+comet closest to the hyperplane in FT.
+Figure 3(c) presents an illustration. In the stylized picture
+we have flattened out the surface of the unit weight vector
+hypersphere that appears in Figure 3(a). The white area
+is version space V, which is bounded by solid lines correspending to labeled instances. The five dotted lines represent unlabeled instances in the pool. The circle represents
+the largest radius hypersphere that can fit in version space.
+Note that the edges of the circle do not touch the solid lines
+~ just as the dark sphere in 3(b) does not meet the hyperplanes on the surface of the larger hypersphere (they meet
+somewhere under the surface). The instance b is closest to
+the SVM w. and so we will choose to query b.
+As noted by [33] there exist more sophisticated approximations that one cau perform. Rowever, these methods are
+significantly more computation.& intensive. For the task
+of relevance feedback, a fast response time for determining
+the next image to present to the user is so critically impor110
+tant that these other approximations are not practical.
+Our SVMActtve image retrieval system uses radial basis function kernels. As noted in Section 2, radial basis function
+kernels have the property that 11Q(xi)ll = A. The Simple
+querying method can still be used with other kernels when
+the training data feature vectors do not have a constant
+modulus, but the motivating explanation no longer holds
+since the SVM can no longer be viewed as the center of the
+largest allowable sphere. However, alternative motivations
+have recently been proposed by Campbell, Cristianini and
+Smola (2000) that do not require a constraint on the modulus.
+For the image retrieval domain, we also have a need for performing multiple pool-queries at the same time. It is not
+practical to present one image at a time for the user to
+label ~ the user is likely to quickly lose patience after a
+few rounds of pool-querying. To prevent this from happening we would like to present the user with multiple images
+(say, twenty) at each round of pool-querying. Thus, for each
+round, the active learner has to choose not just one image
+to be labeled but twenty. Theoretically it would be possible to consider the size of the resulting version spaces for
+each possible labeling of each possible set of twenty poolqueries but clearly this is impractical. Thus instead, for
+matters of computational efficiency, our SVMA,.~%~~ system
+takes the simple approach of choosing the pool-queries to be
+the twenty images closest to its separating hyperplane.
+1 dter Name Hesolution Representation
+Masks Coarse Appearance of culture colors
+Spread Coarse Spatial concentration of a color
+Elongation Coarse Shape of a color
+Hzstogrums Medium Distribution of colors
+Average Medium Similarity comparison within
+the same culture color
+Varzance P me bimdarity comparison withm
+the same culture color
+Table 1: Multi-resolution Color Features.
+others, they acquire finer features. Similarly, for some image
+applications (e.g., for detecting image replicas), employing
+coarse features is sufficient; for other applications (e.g., for
+classifying images), employing finer features may be essential. An image search engine thus must have the flexibility
+to model subjective perception and to satisfy a variety of
+search tasks.
+Our image retrieval system employs a multi-resolution image
+representation scheme [4]. In this scheme, we characterize
+images by two main features: color and texture. We consider
+shape as attributes of these main features.
+5.1 Color
+Although the wavelength of visible light ranges from 400
+nanometers to 700 nanometers, research [lo] shows that the
+colors that can be named by all cultures are generally limited
+to eleven. In addition to black and white, the discernible
+colors are red, yellow, green, blue, brown, purple, pink, orange
+and gray.
+It has been noted [33] that the Simple querying algorithm
+used by SVMActzue can be unstable during the first round
+of querying. To address this issue, SVMA~~~~~ always randomly chooses twenty images for the first relevance feedback
+round. Then it uses the Simple active querying method on
+the second and subsequent rounds.
+SVMA~~~~~ Algorithm Summary
+To summerize, our SVMA ctzve system performs the following
+for each round of relevance feedback:
+. Learn an SVM on the current labeled data
+. If this is the first feedback round, ask the user to label
+twenty randomly selected images. Otherwise, ask the
+user to label the twenty pool images closest to the SVM
+boundary.
+.4fter the relevance feedback rounds have been performed
+SVM A,.tzve retrieves the top-lc most relevant images:
+. Learn a final SVM on the labeled data.
+l The final SVM boundary separates “relevant” images
+from irrelevant ones. Display the k “relevant” images
+that are farthest from the SVM boundary.
+5. IMAGE CHARACTERIZATION
+We believe that image characterization should follow human perception [lo]. In particular, our perception works in
+a multi-resolution fashion. For some visual tasks, our eyes
+may select coarse filters to obtain coarse image features; for
+We first divide color into 12 color bins including 31 bins for
+culture colors and one bin for outliers [12]. At the coarsest resolution, we characterize color using a color mask of
+12 bits. To record color information at finer resolutions,
+we record eight additional features for each color. These
+eight features are color histograms, color means (in H, S and
+V channels), color variances (in H, S and V channel), and
+two shape characteristics: elongation and spreadness. Color
+elongation characterizes the shape of a color and spreadness
+characterizes how that color scatters within the image [16].
+Table 1 summarizes color features in coarse, medium and
+fine resolutions.
+5.2 Texture
+Texture is an important cue for image analysis. Studies [21,
+31, 32, 201 have shown that characterizing texture features in
+terms of structuredness, orientation, and scale (coarseness)
+fits well with models of human perception. A wide variety
+of texture analysis methods have been proposed in the past.
+We choose a discrete wavelet transformation (DWT) using
+quadrature mirror filters [31] because of its computational
+efficiency.
+Each wavelet decomposition on a 2-D image yields four subimages: a $ x i scaled-down image of the input image and its
+wavelets in three orientations: horizontal, vertical and diagonal. Decomposing the scaled-down image further, we
+obtain the tree-structured or wavelet packet decomposition.
+The wavelet image decomposition provides a representation
+that is easy to interpret. Every subimage contains infor111
+Coarse (Level I)
+Medium (Level 2)
+Figure 3: Multi-resolution Texture Features.
+mation of a specific scale and orientation and also retains
+spatial information. We obtain nine texture combinations
+from subimages of three scales and three orientations. Since
+each subimage retains the spatial information of texture,
+we also compute elongation and spreadness for each texture
+channel. Figure 3 summarizes texture features.
+Now, given an image, we can extract the above color and
+texture information to produce a 144 dimensional vector of
+numbers. We use this vector to represent the image. Thus,
+the space X for our SVMs is a 144 dimensional space, and
+each image in our database corresponds to a point in this
+space.
+6. EXPERIMENTS
+For our empirical evaluation of our learning methods we
+used three real-world image datasets: a four-category, a
+ten-category, and a fifteen-category image dataset where
+each category consisted of 100 to 150 images. These image datasets were collected from Core1 Image CDs and the
+Internet.
+. Four-category set. The 602 images in this dataset belong to four categories - architecture, flowers, landscape, and people.
+. Ten-category set. The 1277 images in this dataset belong to ten categories - architecture, bears, clouds,
+flowers, landscape, people, objectionable images, tigers,
+tools, and wuaves. In this set, a few categories were
+added to increase learning difficulty. The tiger category contains images of tigers on landscape and water
+backgrounds to confuse with the landscape category.
+The objectionable images can be confused with people
+wearing little clothing. Clouds and waves have substantial color similarity.
+. Fifteen-category set. In addition to the ten categories
+in the above dataset, the total of 1920 images in this
+dataset includes elephants, fabrics, fireworks, food, and
+texture. We added elephants with landscape and water background to increase learning difficulty between
+landscape, tigers and elephants. We added colorful
+fabrics and food to interfere with flowers. Various texture images (e.g., skin, brick, grass, water, etc.) were
+added to raise learning difficulty for all categories.
+To enable an objective measure of performance, we assumed
+that a query concept was an image category. The SVMA~~~~~
+learner has no prior knowledge about image categoriesr. It
+treats each image as a 144-dimension vector described in
+Section 5. The goal of ~~~~~~~~~ is to learn a given concept through a relevance feedback process. In this process,
+at each feedback round SVMA~~%~~ selects twenty images to
+ask the user to label as “relevant” or “not relevant” with
+respect to the query concept. It then uses the labeled instances to successively refine the concept boundary. After
+the relevance feedback rounds have finished SVMA~~%~~ then
+retrieves the top-k most relevant images from the dataset
+based on the final concept it has learned. Accuracy is then
+computed by looking at the fraction of the k returned result
+that belongs to the target image category. Notice that this is
+equivalent to computing the precision on the top-k images.
+This measure of performance appears to be the most appropriate for the image retrieval task - particularly since, in
+most cases, not all of the relevant images will be able to be
+displayed to the user on one screen. As in the case of web
+searching, we typically wish the first screen of returned images to contain a high proportion of relevant images. We are
+less concerned that not every single instance that satisfies
+the query concept is displayed. As with all SVM algorithms,
+~~~~~~~~~ requires at least one relevant and one irrelevant
+image to function. In practice a single relevant image could
+be provided by the user (e.g., via an upload to the system)
+or could be found by displaying a large number of randomly
+selected images to the user (where, perhaps, the image feature vectors are chosen to be mutually distant from each
+other so as to provide a wide coverage of the image space).
+In either case we assume that we start off with one randomly
+selected relevant image and one randomly selected irrelevant
+image
+6.1 SVMA~~$~~ Experiments
+Figures 4(a-c) show the average top-k accuracy for the three
+different sizes of data sets. We considered the performance
+of SVM~ctzue after each round of relevance feedback. The
+graphs indicate that performance clearly increases after each
+round. Also, the SVMA~~~~~ algorithm’s performance degrades gracefully when the size and complexity of the database
+is increased - for example, after four rounds of relevance
+feedback it achieves an average of loo%, 95%, 88% accuracy
+on the top-20 results for the three different sizes of data sets
+respectively. It is also interesting to note that SVMA~~%~~ is
+not only good at retrieving just the top few images with high
+precision, but it also manages to sustain fairly high accuracy
+even when asked to return larger numbers of images. For
+example, after five rounds of querying it attains 99%) 84%
+and 76% accuracy on the top-70 results for the three different sizes of data sets respectively. SVMA,.~%~~ uses the active
+querying method outlined in Section 4. We examined the
+effect that the active querying method had on performance.
+Figures 5(a) and 5(b) compare the active querying method
+with the regular passive method of sampling. The passive
+‘Unlike some recently developed systems [36] that contain a
+semantical layer between image features and queries to assist query refinement, our system does not have an explicit
+semantical layer. We argue that having a hard-coded semantical layer can make a retrieval system restrictive. Rather,
+dynamically learning the semantics of a query concept is
+more flexible and hence makes the system more useful.
+112
+Figure 4: (a) Averago top-k aceoracy over the four-category dataset. (b) Average top-l; accuracy over the
+ten-category dataset. (c) Average top-k accuracy over the fifteen-category dataset. Standard error bars are
+smaller than the curves’ symbol size. Legend ordor reflects order of curves.
+(a) (b) (cl
+Figure 5: (a) Act% and regular passive learning on the fifteen-category dataset after three rounds of querying.
+(b) Active and regular passive learning on the fifteen-category datasct after five rounds of querying. (c)
+Comparison bctwccn asking ten images per pool-query round and twenty images per pool-querying round
+on the fifteen-category dataset. Standard error bars axe smaller than the curves’ symbol size. Legend order
+rcfleets order of c&&.
+method chooses random images from the pool to be labeled.
+This method is the one that is typically used with SVMs
+since it creates a, randomly selected data set. It is clear that
+the ose of active learning is beneficial in the image retrieval
+domain. There is a significant increase in performance from
+using the active method. SVMA~~,~~ displays 20 images per
+pool-querying round. There is a tradeoff between the number of images to be displayed in one round, and the number
+of querying rounds. The fewer images displayed per round,
+the lower the performance. However, with fewer images per
+round we may be able to conduct more rounds of querying
+and thus increase our performance. Figure 5(c) considers the
+effect of displaying only ten images per round. In this erperiment our first round consisted of displaying twenty random
+images sod then, on the second and subsequent rounds of
+querying, active learning with 10 or 20 images is invoked.
+We notice that there is indeed a benefit to asking (20 random + two rounds of IO images) over asking (20 random
++ one round of 20 images). This is unsurprising since the
+active learner has more control and freedom to adapt when
+asking two rounds of 10 images rather than one round of 20.
+What is interesting is that asking (20 random + two rounds
+of 20 images) is far, far better than asking (20 random + two
+rounds of 10 images). The increase in the cost to users of
+asking 20 images per round is often negligible since osers can
+pick out relevant images easily. Furthermore, there is virtually no additional computational cost in calculating the 20
+images to query over the 10 images to query. Thus, for this
+particular task, we believe that it is worthwhile to display
+around 20 images per screen and limit the number of querying rounds, rather than display fewer images per saeen and
+use many mxe querying rounds. We also investigated
+how performance altered when various aspects of the algorithm were changed. Table 2 shows how all three of the
+texture resolutions are important. Also, the performance
+of the SVM appears to be greatest when all of the texture
+resolutions are included (although in this case the difference
+is not statistically significant). Table 3 indicates how other
+113
+(b)
+Figure 6: (a) Average top-k accuracy over the ten-category dataset. (b) A verage top4 accuracy cwer the
+fifteen-category dataset.
+Texture I Top-50
+features A&lKKy
+None 80.6 * 2 3
+Fine 85.9 * 1:7
+Medium 84.7 i 1.6
+COUX 85.8 f 1.3
+Ail 86.3 * 1.8
+Table 2: Average top-50 accuracy over the fourcategory data set using a regular SVM trained on
+30 images. Texturc spatial features were omitted.
+Top-50 T0p-100 Top-150
+Degree 2 P’olymxmal 95 9
+9217
+zt 0.4 86.1 * 0.5 72.8 5 0.4
+Degree 4 Polynomial * 0.6 82.8 l 0.6 69.0 zk 0.5
+Radial Basis 06.8 * 0.3 89.1 * 0.4 76.0 * 0.4
+Table 3: Accuracy on four-category data set aftcr
+three querying rounds using various kernels. Bold
+type indicates statistically significant results.
+SVM kernel functions perform on the image retrieval task
+compared to the radial basis function kernel. It appears that
+the radial basis function kernel is the most suitable for this
+feature space. One other important aspect of any relevance
+fcedback algorithm is the wall clock time that it takes to
+generate the next pool-queries. Relevance feedback is an interactive task, and if the algorithm takes too long then the
+user is likely to lose patience and be less satisfied with the
+experience. Table 4 shows that ~~~~~~~~~ averages about a
+second on a Sun Workstation to determine the 20 most informative images for the US~IS to label. Retrieval of the 150
+most relevant images takes an similar amount of time and
+computing the final SVM model never exceeds two seconds.
+Dataset
+T73r
+10 cat
+15 cat
+6.2 Scheme Comparison
+We also compared SVMA~~,~~ with two traditional query refinement methods: query point movement (QPM) and query
+ezpponsion (QEX). In this experiment, each scheme returned
+the 20 most relevant images after up to five rounds of relevance feedback. To ensure that the comparison to SVMA~~,.~
+WLS fair, we seeded both schemes with one randomly selected relevant image to generate the first round of images.
+On the ten-category image dataset, Figure 6(a) shows that
+SVMA+~~ achieves nearly 90% accuracy on the top-20 rem
+suits after three rounds of relevance feedback, whereas the
+nccuracies of both QPM and QEX never reach 80%. On
+the fifteen-image category dataset, Figure 6(b) shows that
+SVMnctzuc outperforms the others by even wider margins.
+SVMact,ue reaches 80% top-20 accuracy after three rounds
+and 94% after five rounds, whereas &PM and QEX cannot
+achieve 65% accuracy.
+These results hardly surprise us. Traditional information
+retrieval schemes require a large number of image instances
+to achieve any substantial refinement. By refined current
+relevant instances both &PM and QEX tend to be fairly
+localized in their exploration of the image space and hence
+rather slow in exploring the entire space. During the relevance feedback phase SVMA~~,,, takes both the relevant
+and irrelevant images into account when choosing the next
+pool-queries. Furthermore, it chooses to ask the user to label images that it regards as nuxt informative for learning
+the query concept, rather than those that have the most
+likelihood of being relevant. Thus it tends to explore the
+feature space more aggressively.
+Figures 7 and 8 show an example run of the SVMA~~G
+system. For this run, we are interested in obtaining architecture images. In Figure 7 we initialize the search by giving
+S’JMactive one relevant and one irrelevant image. We then
+yn have three feedback rounds. The images that SVMactlve Dataset round of 20 Computing Retrieving tb.,
+Size queries (sea) final SVLM 150 images asks us to label in these three feedback rounds are images
+602 0.34 * 0 00
+0.71 l 0:01
+os*rJo1
+1277 Lb3 * d.03
+0.43 f 0 02
+0.93 f 0:03
+that SVMA~~,~~ will find most informative to know about.
+For example, we see that it asks us to label a number of
+1920 1.09 * 0.02 1.74 l 0.05 1.37 i 0.04 landscane imaees and other imaees with a blue or ~r.w
+Table 4: Average run timcs in seconds
+background with something in thi foreground. The f&dback rounds allow SVMacta,,e to narrow down the types of
+114
+Feedback Round 1
+Feedback Round 2 Feedback Round 3
+Figure 7: Searching for xchitecture images. SVMA,,~.. Feedback phase.
+images that we like. When it comes to the retrieval phase
+(Figure 7) SVMacttve returns, with high precision, L. large
+most uncertain about)
+varitey of different architecture images, ranging from old
+buildings to modern cityscapes.
+7. RELATED WORK
+There have been several studies of active learning for classification in the machine learning community. The query
+hy committee algorithm [29, S] uses a. distribution over all
+possible classifiers and attempts to greedily reduce the entropy of this distribution. This general purpose algorithm
+has been applied in a number of domains’ using classifiers
+(such as Naive Bayes classifiers (7, 221) for which specifying
+and sampling classifiers from a distribution is natural. Probabilistic models such as the Naive B&yes classifier provide iaterpretable models and principled ways to incorporate prior
+knowledge and data with missing values. However, they typically do not perform as well as discriminative methods such
+as svbfls [14, S].
+Relevance feedback techniques proposed by the information retrieval and database communities also perform nonrandom sampling. The study of [27] puts these query refinement approaches into three categories: query reweighting,
+query point movement and query expansion.
+Lewis and Gale (1994) focused on the text classification
+task and introduced uncertainty sampling using logistic regression and also decision trees [17]. SVMA,~,,,‘s querying
+method is essentially the ame as their uncertainty sampling
+method (choose the instance that our current classifier is
+. Query reweighting and gaery point mouenwnl [13, 24, 261.
+Both query reweighting and query point movement use
+nearest-neighbor sampling: They return top ranked objects to be marked by the user and refine the query based
+on the feedback. These methods tend to require a large
+number of image instances to achieve any substantial refinement since they do not tend to explore the image space
+aggressively.
+. Query ezpansion [27, 371. The query ez,xnsion approach
+can be regarded as a multiple-instances sampling approach.
+The samples of the next round are selected from the neighborhood (not necessarily the nearest ones) of the positivelabeled instances of the previous round. The study of [27]
+shows that query expnnsion achieves only a slim margin of
+improvement (about 10% in precision/recall) over query
+point movement.
+2Altlmugh, to our knowledge, not to the image retrieval do- For image retrieval, the PicHunter system [6] uses Bayesian
+main. prediction to infer the goal image, based up
+Second Srree,~ of Results
+Fourth Screen of Results
+Fifth Screen of Results Sixth Screen uf Results
+Figure 8: Searching for architecture images. SVMncti.. Retrieval phase.
+116
+actions. The system shows that employing active learning
+can drastically cut down the number of iterations (up to 80%
+in some experiments). However the authors also point out
+that their scheme is computationally intensive, since it needs
+to recompute the conditional probability for all unlabeled
+samples after each round of user feedback and hence may
+not scale well with dataset size.
+8 . CONCLUSIONS AND FUTURE WORK
+We have demonstrated that active learning with support
+vector machines can provide a powerful tool for searching
+image databases, outperforming a number of traditional query
+refinement schemes. SVMA,~,,, not only achieves consistently high accuracy on a wide variety of desired returned
+results, but also does it quickly and maintains high precision when asked to deliver large quantities of images. Also,
+unlike recent systems such as SIMPLIcity [36], it does not
+require an explicit semantical layer to perform well.
+There are a number of interesting directions that we wish to
+pursue. The running time of our algorithm scales linearly
+with the size of the image database both for the relevance
+feedback phase and for the retrieval of the top-k images.
+This is because, for each querying round, we have to scan
+through the database for the twenty images that are closest
+to the current SVM boundary, and in the retrieval phase we
+have to scan the entire database for the top k most relevant
+images with respect to the learned concept. ~~~~~~~~~ is
+practical for image databases that contain a few thousand
+images; however, we would like to find ways for it to scale
+to larger sized databases.
+For the relevance feedback phase, one possible way to cope
+with a large image database is, rather than using the entire
+database as the pool, instead sample a few thousand images
+from the database and use these as the pool of potential
+images with which to query the user. The technique of subsampling databases is often used effectively when performing
+data mining with large databases (e.g., [5]). It is plausible
+that this technique will have a negligible effect on overall
+accuracy, while significantly speeding up the running time
+of the SVMA,-~$~~ algorithm on large databases. Retrieval
+speed of relevant images in large databases can perhaps be
+sped up significantly by using intelligent clustering and indexing schemes [19].
+The second direction we wish to pursue is an issue that
+faces many relevance feedback algorithms: that of designing
+methods to seed the algorithm effectively. At the moment
+we assume that we are presented with one relevant image
+and one irrelevant image. It would be beneficial to modify
+SVMA,.~%~~ so that it is not dependent on having a relevant
+starting image. We are currently investigating ways of using
+SVMA~~~~~‘S output to explore the feature space effectively
+until a single relevant image is found.
+An alternative approach for finding a single relevant image
+is to use another algorithm to seed SVMA,~,,,. For example,
+the MEGA algorithm [3] that we have developed is a separate study does not require seeding with a relevant image. If
+all of the images generated in the first round of its relevance
+feedback are irrelevant, it will use the negative images to
+reduce the set of potentially relevant images substantially
+so that a relevant image will be generated in the next round
+with high probability. Indeed, preliminary experiments that
+use MEGA to find and initial relevant image, and SVM,J~~~~~
+to perform relevance feedback have produced promising results.
+Transduction takes advantage of not only the labeled images but also the unlabeled images to learn a user’s query
+concept. Intuitively, the unlabeled images are likely to be
+clustered and this provides us with some extra information
+which we may be able to use to refine our idea of what the
+user’s query concept may be. Transduction has been successfully applied to regular passive SVMs for text classification [15] showing that using unlabeled data can indeeed improve performance. An exciting direction is to see whether
+transduction can be applied to the image retrieval domain
+and furthermore, whether it can also be combined with active learning to provide yet further increases in performance
+for the image retrieval task.
+9. ACKNOWLEDGEMENTS
+Simon Tong was supported by D,4RPA’s Information Assurance program under subcontract to SRI International,
+and by ONR MURI N00014-00-1-0637.
+10.
+PI

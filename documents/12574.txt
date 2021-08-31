@@ -1,0 +1,122 @@
+MLlib: Machine Learning in Apache Spark
+Abstract
+Apache Spark is a popular open-source platform for large-scale data processing that is
+well-suited for iterative machine learning tasks. In this paper we present MLlib, Spark’s
+open-source distributed machine learning library. MLlib provides efficient functionality for
+a wide range of learning settings and includes several underlying statistical, optimization,
+and linear algebra primitives. Shipped with Spark, MLlib supports several languages and
+provides a high-level API that leverages Spark’s rich ecosystem to simplify the development
+of end-to-end machine learning pipelines. MLlib has experienced a rapid growth due
+to its vibrant open-source community of over 140 contributors, and includes extensive
+documentation to support further growth and to let users quickly get up to speed.
+Keywords: scalable machine learning, distributed algorithm
+MLlib: Machine Learning in Apache Spark
+0"
+20"
+40"
+60"
+80"
+100"
+120"
+140"
+160"
+v0.8" v0.9" v1.0" v1.1" v1.2" v1.3" v1.4"
+#"of"Contributors"
+MLlib"version"
+(a) (b)
+Figure 1: (a) Apache Spark ecosytem. (b). Growth in MLlib contributors.
+2. History and Growth
+Spark was started in the UC Berkeley AMPLab and open-sourced in 2010. Spark is designed
+for efficient iterative computation and starting with early releases has been packaged with
+example machine learning algorithms. However, it lacked a suite of robust and scalable
+learning algorithms until the creation of MLlib. Development of MLlib began in 2012
+as part of the MLbase project (Kraska et al., 2013), and MLlib was open-sourced in
+September 2013. From its inception, MLlib has been packaged with Spark, with the initial
+release of MLlib included in the Spark 0.8 release. As an Apache project, Spark (and
+consequently MLlib) is open-sourced under the Apache 2.0 license. Moreover, as of Spark
+version 1.0, Spark and MLlib are on a 3-month release cycle.
+The original version of MLlib was developed at UC Berkeley by 11 contributors, and
+provided a limited set of standard machine learning methods. Since this original release,
+MLlib has experienced dramatic growth in terms of contributors. Less than two years later,
+as of the Spark 1.4 release, MLlib has over 140 contributors from over 50 organizations.
+Figure 1(b) demonstrates the growth in MLlib’s open source community as a function of
+release version. The strength of this open-source community has spurred the development
+of a wide range of additional functionality.
+3. Core Features
+In this section we highlight the core features of MLlib; we refer the reader to the MLlib
+user guide for additional details (MLlib, 2015).
+Supported Methods and Utilities. MLlib provides fast, distributed implementations of
+common learning algorithms, including (but not limited to): various linear models, naive
+Bayes, and ensembles of decision trees for classification and regression problems; alternating least squares with explicit and implicit feedback for collaborative filtering; and k-means
+clustering and principal component analysis for clustering and dimensionality reduction.
+The library also provides a number of low-level primitives and basic utilities for convex
+optimization, distributed linear algebra, statistical analysis, and feature extraction, and
+supports various I/O formats, including native support for LIBSVM format, data integration via Spark SQL (Armbrust et al., 2015), as well as PMML (Guazzelli et al., 2009) and
+MLlib’s internal format for model export.
+Algorithmic Optimizations. MLlib includes many optimizations to support efficient
+distributed learning and prediction. We highlight a few cases here. The ALS algorithm for
+3
+Meng et al.
+recommendation makes careful use of blocking to reduce JVM garbage collection overhead
+and to leverage higher-level linear algebra operations. Decision trees use many ideas from
+the PLANET project (Panda et al., 2009), such as data-dependent feature discretization
+to reduce communication costs, and tree ensembles parallelize learning both within trees
+and across trees. Generalized linear models are learned via optimization algorithms which
+parallelize gradient computation, using fast C++-based linear algebra libraries for worker
+computations. Many algorithms benefit from efficient communication primitives; in particular tree-structured aggregation prevents the driver from being a bottleneck, and Spark
+broadcast quickly distributes large models to workers.
+Pipeline API. Practical machine learning pipelines often involve a sequence of data preprocessing, feature extraction, model fitting, and validation stages. Most machine learning
+libraries do not provide native support for the diverse set of functionality required for
+pipeline construction. Especially when dealing with large-scale datasets, the process of
+cobbling together an end-to-end pipeline is both labor-intensive and expensive in terms of
+network overhead. Leveraging Spark’s rich ecosystem and inspired by previous work (Pedregosa et al., 2011; Buitinck et al., 2013; Sparks et al., 2013, 2015), MLlib includes a
+package aimed to address these concerns. This package, called spark.ml, simplifies the
+development and tuning of multi-stage learning pipelines by providing a uniform set of
+high-level APIs (Meng et al., 2015), including APIs that enable users to swap out a standard learning approach in place of their own specialized algorithms.
+Spark Integration. MLlib benefits from the various components within the Spark ecosystem. At the lowest level, Spark core provides a general execution engine with over 80 operators for transforming data, e.g., for data cleaning and featurization. MLlib also leverages
+the other high-level libraries packaged with Spark. Spark SQL provides data integration
+functionality, SQL and structured data processing which can simplify data cleaning and
+preprocessing, and also supports the DataFrame abstraction which is fundamental to the
+spark.ml package. GraphX (Gonzalez et al., 2014) supports large-scale graph processing
+and provides a powerful API for implementing learning algorithms that can naturally be
+viewed as large, sparse graph problems, e.g., LDA (Blei et al., 2003; Bradley, 2015). Additionally, Spark Streaming (Zaharia et al., 2013) allows users to process live data streams
+and thus enables the development of online learning algorithms, as in Freeman (2015).
+Moreover, performance improvements in Spark core and these high-level libraries lead to
+corresponding improvements in MLlib.
+Documentation, Community, and Dependencies. The MLlib user guide provides extensive documentation; it describes all supported methods and utilities and includes several
+code examples along with API docs for all supported languages (MLlib, 2015). The user
+guide also lists MLlib’s code dependencies, which as of version 1.4 are the following opensource libraries: Breeze, netlib-java, and (in Python) NumPy (Breeze, 2015; Halliday, 2015;
+Braun, 2015; NumPy, 2015). Moreover, as part of the Spark ecosystem, MLlib has active
+community mailing lists, frequent meetup events, and JIRA issue tracking to facilitate opensource contributions (Community, 2015). To further encourage community contributions,
+Spark Packages (Packages, 2015) provides a community package index to track the growing
+number of open source packages and libraries that work with Spark. To date, several of
+the contributed packages consist of machine learning functionality that builds on MLlib.
+4
+MLlib: Machine Learning in Apache Spark
+Finally, a massive open online course has been created to describe the core algorithmic
+concepts used to develop the distributed implementations within MLlib (Talwalkar, 2015).
+4. Performance and Scalability
+In this section we briefly demonstrate the speed, scalability, and continued improvements in
+MLlib over time. We first look at scalability by considering ALS, a commonly used collaborative filtering approach. For this benchmark, we worked with scaled copies of the Amazon
+Reviews dataset (McAuley and Leskovec, 2013), where we duplicated user information as
+necessary to increase the size of the data. We ran 5 iterations of MLlib’s ALS for various
+scaled copies of the dataset, running on a 16 node EC2 cluster with m3.2xlarge instances
+using MLlib versions 1.1 and 1.4. For comparison purposes, we ran the same experiment
+using Apache Mahout version 0.9 (Mahout, 2014), which runs on Hadoop MapReduce.
+Benchmarking results, presented in Figure 2(a), demonstrate that MapReduce’s scheduling
+overhead and lack of support for iterative computation substantially slow down its performance on moderately sized datasets. In contrast, MLlib exhibits excellent performance
+and scalability, and in fact can scale to much larger problems.
+Next, we compare MLlib versions 1.0 and 1.1 to evaluate improvement over time. We
+measure the performance of common machine learning methods in MLlib, with all experiments performed on EC2 using m3.2xlarge instances with 16 worker nodes and synthetic
+datasets from the spark-perf package (https://github.com/databricks/spark-perf).
+The results are presented in Figure 2(b), and show a 3× speedup on average across all
+algorithms. These results are due to specific algorithmic improvements (as in the case of
+ALS and decision trees) as well as to general improvements to communication protocols in
+Spark and MLlib in version 1.1 (Yavuz and Meng, 2014).
+5. Conclusion
+MLlib is in active development, and the following link provides details on how to contribute:
+https://cwiki.apache.org/confluence/display/SPARK/Contributing+to+Spark. Moreover, we would like to acknowledge all MLlib contributors. The list of Spark contributors
+can be found at https://github.com/apache/spark, and the git log command can be
+used to identify MLlib contributors.
+5
+Meng et al.

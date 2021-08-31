@@ -1,0 +1,360 @@
+Machine Learning and Data Mining
+Tom M. Mitchell
+Center for Automated Learning and Discovery
+School of Computer Science
+Carnegie Me
+2 Data Mining Examples
+A prototypical example of a data mining problem is illustrated in Figure 1.
+Here we are provided a set of historical data and asked to use this data to
+make improved decisions in the future. In this example the data consists of
+a set of medical records describing 9,714 pregnant women. The decision we
+wish to improve is our ability to identify future high risk pregnancies (more
+speciacally, pregnancies that are at high risk of requiring an emergency Cesarean section delivery). In this database, each pregnant woman is described
+in terms of 215 distinct features, such as her age, whether this is a arst pregnancy, whether she is diabetic, and so on. As shown in the top portion of
+Figure 1, these features together describe the evolution of the pregnancy over
+time.
+The bottom portion of Figure 1 illustrates a typical result of data mining.
+It shows one of the rules that has been learned automatically from this set of
+data. This particular rule predicts a 60 percent risk of emergency C-section
+for mothers that exhibit a particular combination of three features (e.g., \no
+previous vaginal delivery") out of the 215 possible features. Among women
+known to exhibit these three features, the data indicates that 60 percent
+have historically given birth by emergency C-section. As summarized at the
+bottom of the agure, this regularity holds both over the training data used
+to formulate the rule, and over a separate set of test data used to verify the
+reliability of the rule over new data. Physicians may wish to consider this
+rule as a useful factual statement about past patients when they consider
+treatment of similar new patients.
+What algorithms are used to learn rules such as the one in Figure 1?
+This rule was learned by a symbolic rule learning algorithm similar to Clark
+and Nisbett's CN2 [3]. Decision tree learning algorithms such as Quinlan's
+C4.5 [9] are also frequently used to formulate rules of this type. When rules
+must be learned from extremely large data sets, specialized algorithms that
+stress computational eciency may be used [1, 4]. Other machine learning
+algorithms commonly applied to this kind of data mining problem include
+neural networks [2], inductive logic programming [8], and Bayesian learning
+algorithms [5]. Mitchell's textbook [7] provides a description of a broad range
+of machine learning algorithms, as well as the statistical principles on which
+they are based.
+Although machine learning algorithms such as these are central to the
+2
+data mining process, it is important to note that the data mining process
+also includes other important steps such as building and maintaining the
+database, data formatting and data cleansing, data visualization and summarization, the use of human expert knowledge to formulate the inputs to
+the learning algorithm and to evaluate the empirical regularities it discovers,
+and the eventual deployment of the results. Thus data mining bridges many
+technical areas including data bases, human-computer interaction, statistical
+analysis and machine learning algorithms. In this article, we focus primarily
+on the role of machine learning algorithms in the data mining process.
+The above medical example thus represents a prototypical data mining
+problem in which the data consists of a collection of time series descriptions,
+and we use the data to learn to predict later events in the series (emergency
+C-section) based on earlier events (symptoms before delivery). Although we
+used a medical example for illustration, we could have given an analogous
+example of learning to predict which bank loan applicants are at high risk of
+failing to repay their loan (see Figure 2). As shown in the agure, in this application data typically consists of time series descriptions of customers' bank
+balances and other demographic information, rather than medical symptoms.
+Yet other applications, shown in Figure 3, include predicting customer purchase behavior, customer retention, and the quality of goods produced on a
+particular manufacturing line. All of these are applications for which data
+mining has been successfully applied in practice, and where further research
+promises yet more eective techniques.
+3 The State of the Art, and What Next?
+What is the current state of the art in data mining? The aeld is at an interesting crossroads: we now have a arst generation of data mining algorithms
+(e.g., logistic regression, decision tree and rule learning algorithms, neural
+network learning methods, and Bayesian learning methods) that have been
+demonstrated to be of signiacant value across a variety of real-world applications. Dozens of companies now provide commercial implementations of
+these algorithms (for a list, see www.kdnuggets.com), along with ecient
+interfaces to commercial databases and well-designed user interfaces. But
+these arst generation data mining algorithms work best for problems where
+one has a large set of data collected into a single database, where the data
+3
+Data:
+Patient103 Patient103 Patient103 ... time=1 time=2 time=n
+Age: 23
+FirstPregnancy: no
+Anemia: no
+Diabetes: no
+PreviousPrematureBirth: no
+...
+Elective C-Section: ?
+Emergency C-Section: ?
+Age: 23
+FirstPregnancy: no
+Anemia: no
+PreviousPrematureBirth: no
+Diabetes: YES
+...
+Emergency C-Section: ?
+Ultrasound: abnormal
+Elective C-Section: no
+Age: 23
+FirstPregnancy: no
+Anemia: no
+PreviousPrematureBirth: no
+...
+Elective C-Section: no
+Ultrasound: ?
+Diabetes: no
+Emergency C-Section: Yes
+Ultrasound: ?
+Learned rule:
+If No previous vaginal delivery, and
+Abnormal 2nd Trimester Ultrasound, and
+Malpresentation at admission
+Then Probability of Emergency C-Section is 0.6
+Training set accuracy: 26/41 = .63
+Test set accuracy: 12/20 = .60
+Figure 1: A typical data mining application. A historical set of 9714 medical
+records describes pregnant women over time. The top portion of the agure
+illustrates a typical patient record, where \?" indicates that the feature
+value is unknown. The task here is to identify classes of patients at high
+risk of receiving an emergency Cesarean section. The bottom portion of the
+agure shows one of many rules discovered from this data. Whereas 7% of
+all pregnant women in this dataset received emergency C-sections, this rule
+identiaes a subclass at 60% risk.
+4
+Data:
+Customer103: Customer103: Customer103: (time=t0) (time=t1) (time=tn) ...
+...
+Own House: Yes
+Other delinquent accts: 2
+Loan balance: $2,400
+Income: $52k
+Max billing cycles late: 3
+Years of credit: 9
+...
+Own House: Yes
+Years of credit: 9
+...
+Own House: Yes
+Years of credit: 9
+Loan balance: $3,250
+Income: ?
+Other delinquent accts: 2
+Max billing cycles late: 4
+Loan balance: $4,500
+Income: ?
+Other delinquent accts: 3
+Max billing cycles late: 6
+Repay loan?: ? Repay loan?: ? Repay loan?: No
+Rules learned from synthesized data:
+If Other-Delinquent-Accounts > 2, and
+Number-Delinquent-Billing-Cycles > 1
+Then Repay-Loan? = No
+If Other-Delinquent-Accounts = 0, and
+(Income > $30k) OR (Years-of-Credit > 3)
+Then Repay-Loan? = Yes
+Figure 2: Typical data and rules for credit risk analysis.
+5
+Customer purchase behavior:
+Customer103: Customer103: Customer103: (time=t0) (time=t1) (time=tn) ...
+...
+Sex: M
+Age: 53
+Income: $50k
+Own House: Yes
+MS Products: Word
+Computer: 386 PC
+Purchase Excel?: ?
+...
+Sex: M
+Age: 53
+Income: $50k
+Own House: Yes
+MS Products: Word
+...
+Sex: M
+Age: 53
+Income: $50k
+Own House: Yes
+Purchase Excel?: ?
+MS Products: Word
+Computer: Pentium Computer: Pentium
+Purchase Excel?: Yes
+Customer retention:
+Customer103: Customer103:
+Age: 53 Age: 53 Age: 53
+Sex: M Sex: M Sex: M
+(time=t0) (time=t1) (time=tn) Customer103: ...
+Income: $50k Income: $50k Income: $50k
+Own House: Yes Own House: Yes Own House: Yes
+Checking: $5k Checking: $20k Checking: $0
+Savings: $15k Savings: $0 Savings: $0
+Current-customer?: yes ... ... Current-customer?: yes Current-customer?: No
+Process optimization:
+(time=t0) (time=t1) (time=tn) ... Product72: Product72: Product72:
+...
+Viscosity: 1.3
+... ...
+Viscosity: 1.3
+Product underweight?: ?? Product underweight?:
+Viscosity: 3.2
+Yes
+Fat content: 15%
+Stage: mix
+Mixing-speed: 60rpm
+Density: 1.1
+Stage: cook
+Temperature: 325
+Fat content: 12%
+Density: 1.2
+Stage: cool
+Fan-speed: medium
+Fat content: 12%
+Spectral peak: 3200
+Density: 2.8
+Spectral peak: 2800 Spectral peak: 3100
+Product underweight?: ??
+Figure 3: Additional examples of data mining problems.
+6
+is described by numeric or symbolic features, where the data does not contain text and image features interleaved with these numeric and symbolic
+features, and where the data has been carefully and cleanly collected with a
+particular decision making task in mind.
+While this arst generation of data mining algorithms is already of signia-
+cant practical value, data mining methods are still in their infancy. We might
+well expect the next decade to produce an order of magnitude advance in the
+state of the art, through development of new algorithms that will accomodate
+dramatically more diverse sources and types of data, that will automate a
+broader range of the steps involved in the data mining process, and that will
+support mixed-initiative data mining in which human experts collaborate
+with the computer to form hypotheses and test them against the data.
+To illustrate one important research issue, consider again the problem of
+predicting risk of emergency C-section for pregnant women. One key limitation of current data mining methods is that in fact they cannot utilize
+the full patient record that is already routinely captured in hospital medical
+records! This is because current hospital records for pregnant women often
+contain sequences of images (e.g., the ultrasound images taken during pregnancy), other raw instrument data (e.g., fetal distress monitors), text (e.g.,
+the notes made by physicians during periodic checkups during pregnancy),
+and even speech (e.g., recordings of phone calls), in addition to the numeric
+and symbolic features described in Figure 1. Although our arst generation
+data mining algorithms work well with the numeric and symbolic features,
+and although some learning algorithms are available for learning to classify
+images, or to classify text, the fact is that we currently lack eective algorithms for learning from data that is represented by a combination of these
+various media. As a result, the current state of the art in medical outcomes
+analysis is to ignore the image, text, and raw sensor portion of the medical record, or at best to summarize these in some oversimpliaed form (e.g.,
+labeling the complex ultrasound image as simply \normal" or \abnormal").
+However, it is clear that if predictions could be based on the full medical
+record, we would expect much greater prediction accuracy. Therefore, a
+topic of considerable current research interest is the development of algorithms that can learn regularities over rich, mixed media data. This issue is
+important in many data mining applications, ranging from mining historical
+equipment maintenance records, to mining records at customer call centers,
+to analyzing fMRI data on brain activity during dierent tasks.
+7
+This issue of learning from mixed media data is just one of many current
+research issues in data mining. The left hand side of Figure 4 lists a number
+of additional research topics, while the right hand side of this agure indicates
+a variety of applications for which these research issues are important. Below
+we discuss these additional research issues in turn:
+ Optimizing decisions rather than predictions. The goal here is to use
+historical data to improve the choice of actions in addition to the more
+usual goal of predicting outcomes. For example, consider again the
+birth data set mentioned earlier. Although it is clearly helpful to learn
+to predict which women suer a high risk of birth complications, it
+would be even more useful to learn which pre-emptive actions could
+be taken to reduce this risk. Similarly, in modeling bank customers it
+is one thing to predict which customers may close their accounts and
+move to a new bank, but even more useful to learn which actions may
+be taken to retain the customer before they depart. This problem of
+learning which actions acheive a desired outcome, given only previously
+acquired data, is much more subtle than it may arst appear. The dif-
+acult issue is that the available data often represents a biased sample;
+for instance, whereas the data may show that mothers giving birth
+at home suer fewer complications than women who give birth in the
+hospital, one cannot necessarily conclude that sending a woman home
+will reduce her risk of complications. This empirical regularity might
+instead be due to the fact that a disproportionate number of high risk
+women choose to give birth in the hospital. Thus, the problem of learning to choose actions raises important and basic questions such as how
+to learn from biased samples of data, and how to incorporate conjectures by human experts about the eectiveness of various intervention
+actions. If successful, this research will allow applying historical data
+much more directly to the questions faced by decision-makers.
+ Scaling to extremely large data sets. Whereas most learning algorithms
+perform acceptably on datasets with tens of thousands of training examples, data sets such as large retail customer data bases, and the
+Hubble telescope data can easily reach a terabyte or more. To provide
+reasonably ecient data mining methods for such large data sets requires additional research. Research during the past few has already
+8
+produced more ecient algorithms for problems such as learning association rules [1], and ecient visualization of large data sets [6]. Further
+research in this direction might lead to an even closer integration of
+machine learning algorithms into database systems.
+ Active experimentation. Most current data mining systems passively
+accept a predetermined data set. We need new computer methods
+that actively generate optimal experiments to obtain additional useful
+information. For example, in modeling a manufacturing process it is
+relatively easy to capture data while the process runs under normal
+conditions. However, this data may lack information about how the
+process will perform under important non-standard conditions. We
+need algorithms that will propose optimal experiments to collect the
+most informative data, taking into account precisely the expected beneats as well as the risks of the experiment.
+ Learning over multiple databases and the World Wide Web. The volume and diversity of data available over the Internet and over corporate
+intranets is very large and growing rapidly. Therefore it is natural that
+future data mining methods will use this huge variety of data sources
+to expand their access to data and their ability to learn useful regularities. For example, one large equipment manufacturer currently uses
+data mining to construct models of the interests and maintenance needs
+of their corporate customers. In this application, they mine a database
+that consists primarily of records of past purchases and servicing needs
+of various customers, with only a few features that describe the type
+of business that each customer performs. As it turns out, nearly all
+of these corporate customers have public web sites that provide considerable information about their current and planned activities. If
+the data mining algorithms could combine this information with the
+information available in the internal database, one would expect signiacant improvements. Of course to achieve this, we will need new
+methods that can successfully extract information from web hypertext.
+If successful, this line of work may result in several orders of magnitude
+increase in the variety and currency of data accessible to many data
+mining applications.
+ Inventing new features to improve prediction accuracy. In many cases,
+9
+the accuracy of predictions can be improved by inventing a more appropriate set of features to describe the available data. For example,
+consider the problem of detecting the imminent failure of a piece of
+equipment based on the time series of sensor data collected from the
+equipment. It is easy to generate millions of features that describe
+this time series by taking dierences, sums, ratios, averages, etc. of
+primitive sensor readings and previously deaned features. Our conjecture is that given a suciently large and long-duration data set it
+should be feasible to automatically explore this large space of possible
+deaned features in order to identify the small fraction of these features
+most useful for future learning. If successful, this work would lead
+to increased accuracy in many prediction problems, such as predicting equipment failure, customer attrition, credit repayment, medical
+outcomes, etc.
+There are many other directions of active research as well, including work
+on how to provide more useful data visualization tools, how to support mixedinitiative human-machine exploration of large data sets, and how to reduce
+the eort needed for data warehousing and for combining information from
+dierent legacy databases. Still, the interesting fact is that even current arstgeneration approaches to data mining are being put to routine use by many
+organizations, producing important gains in many applications.
+We might speculate that as the future of this aeld unfolds, we will see
+several directions in which it will advance including (1) new algorithms that
+learn more accurately, that are able to utilize data from dramatically more
+diverse data sources available over the internet and intranets, and that are
+able to incorporate more human input as they work (2) integration of these
+data mining algorithms into standard database systems, (3) an increasing
+eort within many organizations on capturing, warehousing and utilizing
+historical data to support evidence-based decision making.
+We can also expect to see more universities react to the severe shortage of trained experts in this area, by creating new academic programs
+for students wishing to specialize in data mining. In fact, several universities have recently announced graduate degree programs in data mining,
+machine learning, and computational statisics, including Carnegie Mellon
+University (see www.cs.cmu.edu/cald), University of California at Irvine
+(www.ics.uci.edu/gcounsel/masterreqs.html), George Mason University (van10
+Basic Technologies Applications
+Active experimentation, exploration
+Medicine
+Manufacturing
+Marketing
+Public policy
+Intelligence analysis
+Scientific Issues,
+Financial
+Learning from mixed media data, e.g.,
+ numeric, text, image, voice, sensor, ...
+Inventing new features to improve
+accuracy
+Learning from multiple databases and
+the world wide web
+Optimizing decisions rather than
+predictions
+Figure 4: Research on basic scientiac issues (left) will impact future data
+mining applications in many areas (right).
+11
+ish.science.gmu.edu) and the University of Bristol (www.cs.bris.ac.uk/Teaching/MachineLearning).
+Acknowledgements
+The ideas presented here have been shaped in many discussions with faculty
+and students in the Center for Automated Learning and Discovery (CALD) at
+Carnegie Mellon. This paper has also beneated from comments by Christos
+Faloutsos, Tosh Munakata, and an anonymous referee. This research was
+supported in part by the Darpa HPKB program under contract F30602-97-
+1-0215, and in part by contributions from the Corporate Members of CALD.
